@@ -1,5 +1,10 @@
 Checkout my productivity course at: https://www.productiveprogrammer.com
 
+IMPORTANT UPDATE: The SESSION_TOKEN solution no longer works (since the time I recorded my video). But, you can modify this code to use your username and password as a login, more details on how to do that along with the latest authentication strategies can be located here: https://github.com/transitive-bullshit/chatgpt-api 
+
+Original Video Tutorial: https://youtu.be/dhg-ASSKnDM
+
+Note: Please feel free to contribute any pull requests to expand this command line tool and I will merge them in to keep this repository relevant. Thank you!
 
 ![AI Chatbot Demo](media/demo.gif)
 
