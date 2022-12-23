@@ -3,7 +3,8 @@
 ```yml
 My thoughts on the update:
 ```
-- Add TypeScript
+- Add TypeScript config files etc.
+- Add Docs and notes of the update.
 - Make this work in VS Code terminal?? 
    - I want to try this, but I have no clue if I can do this,
 
