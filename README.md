@@ -1,3 +1,16 @@
+# 🤖 ChatGPT AI ChatBot Update v0.1.2 🚧 Work In Progress 🏗 - WrappedUsername
+
+```yml
+My thoughts on the update:
+```
+- Add TypeScript
+- Make this work in VS Code terminal?? 
+   - I want to try this, but I have no clue if I can do this,
+
+```yml
+Please check out Productive Programmer the owner of the repo:
+```
+
 Checkout my productivity course at: https://www.productiveprogrammer.com
 
 IMPORTANT UPDATE: The SESSION_TOKEN solution no longer works (since the time I recorded my video). But, you can modify this code to use your username and password as a login, more details on how to do that along with the latest authentication strategies can be located here: https://github.com/transitive-bullshit/chatgpt-api 
@@ -27,18 +40,11 @@ cd ai-chatbot
 npm install
 ```
 
-**This package requires a valid session token from ChatGPT to access it's unofficial REST API.**
+~~~yml
+WrappedUsername working here:
+~~~~
 
-To get a session token:
-
-1. Go to https://chat.openai.com/chat and log in or sign up.
-2. Open dev tools.
-3. Open `Application` > `Cookies`.
-   ![ChatGPT cookies](./media/session-token.png)
-4. Copy the value for `__Secure-next-auth.session-token` and save it to your environment.
-```bash
-export SESSION_TOKEN="<YOUR TOKEN HERE>"
-```
+# Updating the Auth! 🚧 Work In Progress 🏗
 
 ## Run Code
 ```bash
