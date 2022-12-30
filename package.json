@@ -1,5 +1,104 @@
 {
+  "name": "ai-chatbot-update",
+  "description": "Update for Node.js client for the unofficial ChatGPT API, ai chatbot used in terminal.",
+  "author": "Productive Programmer, update contributor: WrappedUsername",
+  "research repositories": {
+    "author": "Travis Fischer <travis@transitivebullsh.it>",
+    "repository": "transitive-bullshit/chatgpt-api"
+  },
+  "license": "MIT",
+  "version": "0.1.2",
+  "main": "chat.ts",
+  "type": "module",
+  "source": "./src/index.tsx",
+  "types": "./build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/index.js",
+      "types": "./build/index.d.ts",
+      "default": "./build/index.js"
+    }
+  },
+  "files": [
+    "build",
+    "third-party"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WrappedUsername/ai-chatbot-update.git"
+  },
+  "keywords": [
+    "chatgpt",
+    "terminal",
+    "ai"
+  ],
+  "bugs": {
+    "url": "https://github.com/WrappedUsername/ai-chatbot-update/issues"
+  },
+  "homepage": "https://github.com/WrappedUsername/ai-chatbot-update#readme",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "del build",
+    "prebuild": "run-s clean",
+    "predev": "run-s clean",
+    "pretest": "run-s build",
+    "docs": "typedoc",
+    "prepare": "husky install",
+    "pre-commit": "lint-staged",
+    "test": "run-p test:*",
+    "test:prettier": "prettier '**/*.{js,jsx,ts,tsx}' --check"
+  },
   "dependencies": {
-    "chatgpt": "^1.4.0"
+    "chatgpt": "^1.4.0",
+    "delay": "^5.0.0",
+    "eventsource-parser": "^0.0.5",
+    "expiry-map": "^2.0.0",
+    "html-to-md": "^0.8.3",
+    "p-timeout": "^6.0.0",
+    "puppeteer-extra": "^3.3.4",
+    "puppeteer-extra-plugin-recaptcha": "npm:@fisch0920/puppeteer-extra-plugin-recaptcha@^3.6.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.1",
+    "random": "^4.1.0",
+    "remark": "^14.0.2",
+    "strip-markdown": "^5.0.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.0.0",
+    "@types/node": "^18.11.9",
+    "@types/uuid": "^9.0.0",
+    "ava": "^5.1.0",
+    "del-cli": "^5.0.0",
+    "dotenv-safe": "^8.2.0",
+    "lint-staged": "^13.0.3",
+    "npm-run-all": "^4.1.5",
+    "ora": "^6.1.2",
+    "prettier": "^2.8.0",
+    "puppeteer": "^19.4.1",
+    "tsup": "^6.5.0",
+    "tsx": "^3.12.1",
+    "typedoc": "^0.23.21",
+    "typedoc-plugin-markdown": "^3.13.6",
+    "typescript": "^4.9.3"
+  },
+  "peerDependencies": {
+    "puppeteer": "*"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write"
+    ]
+  },
+  "ava": {
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--loader=tsx"
+    ]
   }
 }

@@ -1,4 +1,9 @@
 import { ChatGPTAPI } from 'chatgpt'
+import dotenv from 'dotenv-safe'
+import { oraPromise } from 'ora'
+import { ChatGPTAPIBrowser } from '../src'
+
+dotenv.config()
 
 const readline = require('readline').createInterface({
     input: process.stdin,
