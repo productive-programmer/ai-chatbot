@@ -1,8 +1,8 @@
 module.exports = {
   env: {
     browser: false,
+    node: true,
   },
-  extends: "standard-with-typescript",
   overrides: [],
   parserOptions: {
     ecmaVersion: "latest",
@@ -12,5 +12,7 @@ module.exports = {
     "prettier",
     "standard-with-typescript",
   ],
-  rules: {},
+  rules: {
+
+  },
 };

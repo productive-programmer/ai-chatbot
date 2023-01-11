@@ -1,0 +1,13 @@
+node_modules
+yarn.lock
+.env
+dist
+npm-debug.log
+Dockerfile*
+docker-compose*
+.dockerignore
+.git
+.gitignore
+README.md
+LICENSE
+.vscode

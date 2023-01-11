@@ -1,6 +1,4 @@
-.next
-next-env.d.ts
+tsconfig.json
 node_modules
 yarn.lock
-package-lock.json
-public
+.env
