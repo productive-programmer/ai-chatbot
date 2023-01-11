@@ -1,14 +1,16 @@
 module.exports = {
   env: {
-    browser: false
+    browser: false,
   },
-  extends: 'standard-with-typescript',
-  overrides: [
-  ],
+  extends: "standard-with-typescript",
+  overrides: [],
   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module'
+    ecmaVersion: "latest",
+    sourceType: "module",
   },
-  rules: {
-  }
-}
+  extends: [
+    "prettier",
+    "standard-with-typescript",
+  ],
+  rules: {},
+};
