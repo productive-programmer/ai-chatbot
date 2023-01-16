@@ -1,4 +1,7 @@
-tsconfig.json
-node_modules
-yarn.lock
-.env
+.snapshots/
+build/
+dist/
+node_modules/
+.next/
+.vercel/
+third-party/

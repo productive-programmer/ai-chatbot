@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import * as types from './types'
 import { AChatGPTAPI } from './abstract-chatgpt-api'
-import { getBrowser, getOpenAIAuth } from './openai-auth'
+import { getBrowser, getOpenAIAuth, getPage } from './openai-auth'
 import {
   browserPostEventStream,
   isRelevantRequest,
@@ -33,6 +33,10 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
   protected _page: Page
   protected _proxyServer: string
   protected _isRefreshing: boolean
+  protected _messageOnProgressHandlers: Record<
+    string,
+    (partialResponse: types.ChatResponse) => void
+  >
 
   /**
    * Creates a new client for automating the ChatGPT webapp.
@@ -97,6 +101,7 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
     this._executablePath = executablePath
     this._proxyServer = proxyServer
     this._isRefreshing = false
+    this._messageOnProgressHandlers = {}
 
     if (!this._email) {
       const error = new types.ChatGPTError('ChatGPT invalid email')
@@ -124,31 +129,24 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
         proxyServer: this._proxyServer,
         minimize: this._minimize
       })
-      this._page =
-        (await this._browser.pages())[0] || (await this._browser.newPage())
 
-      if (this._proxyServer && this._proxyServer.includes('@')) {
-        try {
-          const proxyUsername = this._proxyServer.split('@')[0].split(':')[0]
-          const proxyPassword = this._proxyServer.split('@')[0].split(':')[1]
-
-          await this._page.authenticate({
-            username: proxyUsername,
-            password: proxyPassword
-          })
-        } catch (err) {
-          console.error(
-            `Proxy "${this._proxyServer}" throws an error at authenticating`,
-            err.toString()
-          )
-        }
-      }
+      this._page = await getPage(this._browser, {
+        proxyServer: this._proxyServer
+      })
 
       // bypass annoying popup modals
       this._page.evaluateOnNewDocument(() => {
         window.localStorage.setItem('oai/apps/hasSeenOnboarding/chat', 'true')
         window.localStorage.setItem(
           'oai/apps/hasSeenReleaseAnnouncement/2022-12-15',
+          'true'
+        )
+        window.localStorage.setItem(
+          'oai/apps/hasSeenReleaseAnnouncement/2022-12-19',
+          'true'
+        )
+        window.localStorage.setItem(
+          'oai/apps/hasSeenReleaseAnnouncement/2023-01-09',
           'true'
         )
       })
@@ -188,6 +186,24 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
       })
     }
 
+    // TODO: will this exist after page reload and navigation?
+    await this._page.exposeFunction(
+      'ChatGPTAPIBrowserOnProgress',
+      (partialResponse: types.ChatResponse) => {
+        if ((partialResponse as any)?.origMessageId) {
+          const onProgress =
+            this._messageOnProgressHandlers[
+              (partialResponse as any).origMessageId
+            ]
+
+          if (onProgress) {
+            onProgress(partialResponse)
+            return
+          }
+        }
+      }
+    )
+
     // dismiss welcome modal (and other modals)
     do {
       const modalSelector = '[data-headlessui-state="open"]'
@@ -207,6 +223,12 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
     } while (true)
 
     if (!(await this.getIsAuthenticated())) {
+      if (!this._accessToken) {
+        console.warn('no access token')
+      } else {
+        console.warn('failed to find prompt textarea')
+      }
+
       throw new types.ChatGPTError('Failed to authenticate session')
     }
 
@@ -282,22 +304,19 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
         }
       })
     }
+    const detail = body?.detail || ''
 
     if (url.endsWith('/conversation')) {
-      if (status === 403) {
-        console.log(`ChatGPT "${this._email}" error 403...`)
+      if (status >= 400) {
+        console.warn(`ChatGPT "${this._email}" error ${status};`, detail)
         // this will be handled in the sendMessage error handler
         // await this.refreshSession()
       }
     } else if (url.endsWith('api/auth/session')) {
-      if (status === 401) {
-        console.log(`ChatGPT "${this._email}" error 401...`)
+      if (status >= 400) {
+        console.warn(`ChatGPT "${this._email}" error ${status};`, detail)
         // this will be handled in the sendMessage error handler
         // await this.resetSession()
-      } else if (status === 403) {
-        console.log(`ChatGPT "${this._email}" error 403...`)
-        // this will be handled in the sendMessage error handler
-        // await this.refreshSession()
       } else {
         const session: types.SessionResult = body
 
@@ -474,9 +493,8 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
       parentMessageId = uuidv4(),
       messageId = uuidv4(),
       action = 'next',
-      timeoutMs
-      // TODO
-      // onProgress
+      timeoutMs,
+      onProgress
     } = opts
 
     const url = `https://chat.openai.com/backend-api/conversation`
@@ -500,6 +518,16 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
       body.conversation_id = conversationId
     }
 
+    if (onProgress) {
+      this._messageOnProgressHandlers[messageId] = onProgress
+    }
+
+    const cleanup = () => {
+      if (this._messageOnProgressHandlers[messageId]) {
+        delete this._messageOnProgressHandlers[messageId]
+      }
+    }
+
     let result: types.ChatResponse | types.ChatError
     let numTries = 0
     let is401 = false
@@ -520,6 +548,7 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
         if (!(await this.getIsAuthenticated())) {
           const error = new types.ChatGPTError('Not signed in')
           error.statusCode = 401
+          cleanup()
           throw error
         }
       }
@@ -540,9 +569,10 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
         // response handler or if the user has closed the page manually.
 
         if (++numTries >= 2) {
-          const error = new types.ChatGPTError(err.toString())
+          const error = new types.ChatGPTError(err.toString(), { cause: err })
           error.statusCode = err.response?.statusCode
           error.statusText = err.response?.statusText
+          cleanup()
           throw error
         }
 
@@ -562,6 +592,7 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
           is401 = true
 
           if (numTries >= 2) {
+            cleanup()
             throw error
           } else {
             continue
@@ -582,10 +613,12 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
           result.response = markdownToText(result.response)
         }
 
+        cleanup()
         return result
       }
     } while (!result)
 
+    cleanup()
     // console.log('<<< EVALUATE', result)
 
     // const lastMessage = await this.getLastMessage()
@@ -662,16 +695,21 @@ export class ChatGPTAPIBrowser extends AChatGPTAPI {
     }
 
     if (this._browser) {
-      const pages = await this._browser.pages()
-      for (const page of pages) {
-        await page.close()
+      try {
+        const pages = await this._browser.pages()
+        for (const page of pages) {
+          await page.close()
+        }
+      } catch (err) {
+        console.warn('closeSession error', err)
       }
 
       await this._browser.close()
 
+      const browserProcess = this._browser.process()
       // Rule number 1 of zombie process hunting: double-tap
-      if (this._browser.process()) {
-        this._browser.process().kill('SIGINT')
+      if (browserProcess) {
+        browserProcess.kill('SIGKILL')
       }
     }
 

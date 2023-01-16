@@ -8,7 +8,7 @@
   },
   "license": "MIT",
   "version": "0.1.2",
-  "main": "chat.ts",
+  "main": "index.tsx",
   "type": "module",
   "source": "./src/index.tsx",
   "types": "./build/index.d.ts",

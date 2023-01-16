@@ -1,10 +1,41 @@
-import { ChatGPTAPI } from 'chatgpt'
-import dotenv from 'dotenv-safe'
-import { oraPromise } from 'ora'
-import { ChatGPTAPIBrowser } from '../src'
+import { ChatGPTAPIBrowser } from './chatgpt-api-browser';
+import { ChatGPTAPI } from 'chatgpt'; // <---- previous version
+import dotenv from 'dotenv-safe';
+import { oraPromise } from 'ora';
+import { OpenAIAuth } from './openai-auth';
 
-dotenv.config()
 
+dotenv.config();
+
+async function main() {
+  const email: any = process.env.OPENAI_EMAIL;
+  const password: any = process.env.OPENAI_PASSWORD;
+
+  // use puppeteer to bypass cloudflare (headful because of captchas)
+  const api = new ChatGPTAPIBrowser({
+    email,
+    password
+  })
+
+  await api.initSession()
+
+  const result = await api.sendMessage('Hello World!')
+  console.log(result.response)
+
+  const prompt =
+    "Write a python version of bubble sort. Do not include example usage.";
+
+  const res = await oraPromise(api.sendMessage(prompt), {
+    text: prompt,
+  });
+  console.log(res.response);
+
+  // close the browser at the end
+  await api.closeSession();
+}
+
+
+// Previous version
 const readline = require('readline').createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -33,10 +64,23 @@ async function askAI(question) {
     console.log(`This may take a minute..\n\n`)
 
     // sessionToken is required (from https://chat.openai.com/chat); see README.md for details
-    const api = new ChatGPTAPI({ sessionToken: process.env.SESSION_TOKEN })
+    // const api = new ChatGPTAPI({ sessionToken: process.env.SESSION_TOKEN })
+
+    
 
     // ensure the API is properly authenticated
-    await api.ensureAuth()
+    // await api.ensureAuth()
+
+    const email: any = process.env.OPENAI_EMAIL;
+    const password: any = process.env.OPENAI_PASSWORD;
+
+    // use puppeteer to bypass cloudflare (headful because of captchas)
+    const api = new ChatGPTAPIBrowser({
+      email,
+      password,
+    });
+
+    await api.initSession();
 
     // send a message and wait for the response
     const response = await api.sendMessage(question)
@@ -57,3 +101,7 @@ if (command_line_question) {
     promptHuman()
 }
 
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
